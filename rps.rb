@@ -1,3 +1,9 @@
+module Formatable
+  def spacer
+    puts
+  end
+end
+
 class Move
   VALUES = ['rock', 'paper', 'scissors']
 
@@ -35,17 +41,21 @@ class Move
 end
 
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
 
   def initialize
+    @score = 0
     set_name
   end
 end
 
 class Human < Player
+  include Formatable
+
   def set_name
     n = ""
     loop do
+      spacer
       puts "What's your name?"
       n = gets.chomp
       break unless n.empty?
@@ -58,12 +68,14 @@ class Human < Player
     choice = nil
 
     loop do
+      spacer
       puts "Please choose rock, paper, or scissors:"
       choice = gets.chomp
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice."
     end
 
+    system "clear"
     self.move = Move.new(choice)
   end
 end
@@ -79,6 +91,9 @@ class Computer < Player
 end
 
 class RPSGame
+  include Formatable
+  WINNING_SCORE = 10
+
   attr_accessor :human, :computer
 
   def initialize
@@ -87,14 +102,18 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors!"
+    spacer
+    puts "***** Welcome to Rock, Paper, Scissors! *****"
+    puts "The first player to score #{WINNING_SCORE} points wins"
   end
 
   def display_goodbye_message
+    spacer
     puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
   end
 
   def display_moves
+    puts "----------------RESULTS----------------"
     puts "#{human.name} chose #{human.move}."
     puts "#{computer.name} chose #{computer.move}."
   end
@@ -109,10 +128,46 @@ class RPSGame
     end
   end
 
+  def display_score
+    if human.move > computer.move
+      human.score += 1
+    else
+      computer.score += 1
+    end
+
+    spacer
+    puts "-----------------SCORE-----------------"
+    puts "#{human.name}'s score: #{human.score}"
+    puts "#{computer.name}'s score: #{computer.score}"
+  end
+
+  def winner?
+    human.score == WINNING_SCORE || computer.score == WINNING_SCORE
+  end
+
+  def reset_scores
+    human.score = 0
+    computer.score = 0
+  end
+
+  def game_over_message
+    if human.score == WINNING_SCORE
+      winner = human.name
+    elsif computer.score == WINNING_SCORE
+      winner = computer.name
+    end
+
+    spacer
+    puts "----------------WINNER-----------------"
+    puts "#{winner} is the first to #{WINNING_SCORE} points and wins the game!"
+  end
+
   def play_again?
     answer = ''
 
     loop do
+      spacer
+      puts "--------------PLAY AGAIN?--------------"
       puts "Would you like to play again? (y/n)"
       answer = gets.chomp
       break if ['y', 'n'].include?(answer.downcase)
@@ -122,15 +177,28 @@ class RPSGame
     answer == 'y'
   end
 
-  def play
-    display_welcome_message
-
+  def play_game
     loop do
       human.choose
       computer.choose
       display_moves
       display_winner
+      display_score
+
+      if winner?
+        game_over_message
+        break
+      end
+    end
+  end
+
+  def play
+    display_welcome_message
+
+    loop do
+      play_game
       break unless play_again?
+      reset_scores
     end
 
     display_goodbye_message
