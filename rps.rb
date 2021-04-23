@@ -132,13 +132,17 @@ end
 
 class RPSGame
   include Formatable
-  WINNING_SCORE = 10
+  WINNING_SCORE = 3
 
-  attr_accessor :human, :computer
+  attr_accessor :human, :computer, :round, :winner
+  attr_reader :history
 
   def initialize
+    @round = 1
     @human = Human.new
     @computer = Computer.new
+    @winner = nil
+    @history = {}
   end
 
   def display_welcome_message
@@ -159,20 +163,26 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}."
   end
 
+  def determine_winner
+    self.winner = if human.move.type > computer.move.type
+                    human.name
+                  elsif human.move.type < computer.move.type
+                    computer.name
+                  end
+  end
+
   def display_winner
-    if human.move.type > computer.move.type
-      puts "#{human.name} won!"
-    elsif human.move.type < computer.move.type
-      puts "#{computer.name} won!"
+    if winner
+      puts "#{winner} won!"
     else
       puts "It's a tie!"
     end
   end
 
   def update_score
-    if human.move.type > computer.move.type
+    if winner == human.name
       human.score += 1
-    elsif human.move.type < computer.move.type
+    elsif winner == computer.name
       computer.score += 1
     end
   end
@@ -184,7 +194,7 @@ class RPSGame
     puts "#{computer.name}'s score: #{computer.score}"
   end
 
-  def winner?
+  def game_winner?
     human.score == WINNING_SCORE || computer.score == WINNING_SCORE
   end
 
@@ -193,16 +203,69 @@ class RPSGame
     computer.score = 0
   end
 
+  def update_round
+    self.round += 1
+  end
+
+  def update_history
+    round_winner = winner || "tie"
+
+    history[round] = {
+      "results" => {
+        human.name => human.move.to_s,
+        computer.name => computer.move.to_s,
+        "Winner" => round_winner
+      },
+      "score" => {
+        human.name => human.score,
+        computer.name => computer.score
+      }
+    }
+  end
+
+  def display_history
+    history.each do |round, data|
+      puts "------------------------------"
+      puts "ROUND #{round}:"
+      puts
+      puts "** Results **"
+      data["results"].each do |name, move|
+        puts "#{name}: #{move}"
+      end
+
+      puts
+      puts "** Score **"
+      data["score"].each do |name, score|
+        puts "#{name}: #{score}"
+      end
+    end
+  end
+
   def game_over_message
     if human.score == WINNING_SCORE
-      winner = human.name
+      game_winner = human.name
     elsif computer.score == WINNING_SCORE
-      winner = computer.name
+      game_winner = computer.name
     end
 
     spacer
     puts "----------------WINNER-----------------"
-    puts "#{winner} is the first to #{WINNING_SCORE} points and wins the game!"
+    puts "#{game_winner} is the first to #{WINNING_SCORE} points and wins the game!"
+  end
+
+  def view_history?
+    answer = ''
+
+    loop do
+      spacer
+      puts "-------------VIEW HISTORY?-------------"
+      puts "Would you like to view the game history (y/n)"
+      answer = gets.chomp
+      break if ['y', 'n'].include?(answer.downcase)
+      puts "Sorry, must be y or n."
+    end
+
+    answer == 'y'
   end
 
   def play_again?
@@ -225,11 +288,14 @@ class RPSGame
       computer.choose
       human.choose
       display_moves
+      determine_winner
       display_winner
       update_score
       display_score
+      update_history
+      update_round
 
-      if winner?
+      if game_winner?
         game_over_message
         break
       end
@@ -241,6 +307,7 @@ class RPSGame
 
     loop do
       play_game
+      display_history if view_history?
       break unless play_again?
       reset_scores
     end
