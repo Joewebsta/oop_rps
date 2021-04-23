@@ -4,57 +4,94 @@ module Formatable
   end
 end
 
-class Move
-  VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
-
-  def initialize(value)
-    @value = value
-  end
-
-  def scissors?
-    @value == 'scissors'
-  end
-
-  def rock?
-    @value == 'rock'
-  end
-
-  def paper?
-    @value == 'paper'
-  end
-
-  def lizard?
-    @value == 'lizard'
-  end
-
-  def spock?
-    @value == 'spock'
+class Rock
+  def initialize
+    @value = "rock"
   end
 
   def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (rock? && other_move.lizard?) ||
-      (paper? && other_move.rock?) ||
-      (paper? && other_move.spock?) ||
-      (scissors? && other_move.paper?) ||
-      (scissors? && other_move.lizard?) ||
-      (lizard? && other_move.paper?) ||
-      (lizard? && other_move.spock?) ||
-      (spock? && other_move.rock?) ||
-      (spock? && other_move.scissors?)
+    other_move.class == Scissors || other_move.class == Lizard
   end
 
   def <(other_move)
-    (rock? && other_move.paper?) ||
-      (rock? && other_move.spock?) ||
-      (paper? && other_move.lizard?) ||
-      (paper? && other_move.scissors?) ||
-      (scissors? && other_move.rock?) ||
-      (scissors? && other_move.spock?) ||
-      (lizard? && other_move.scissors?) ||
-      (lizard? && other_move.rock?) ||
-      (spock? && other_move.lizard?) ||
-      (spock? && other_move.paper?)
+    other_move.class == Spock || other_move.class == Paper
+  end
+end
+
+class Paper
+  def initialize
+    @value = "paper"
+  end
+
+  def >(other_move)
+    other_move.class == Rock || other_move.class == Spock
+  end
+
+  def <(other_move)
+    other_move.class == Scissors || other_move.class == Lizard
+  end
+end
+
+class Scissors
+  def initialize
+    @value = "scissors"
+  end
+
+  def >(other_move)
+    other_move.class == Paper || other_move.class == Lizard
+  end
+
+  def <(other_move)
+    other_move.class == Rock || other_move.class == Spock
+  end
+end
+
+class Spock
+  def initialize
+    @value = "spock"
+  end
+
+  def >(other_move)
+    other_move.class == Rock || other_move.class == Scissors
+  end
+
+  def <(other_move)
+    other_move.class == Lizard || other_move.class == Paper
+  end
+end
+
+class Lizard
+  def initialize
+    @value = "lizard"
+  end
+
+  def >(other_move)
+    other_move.class == Paper || other_move.class == Spock
+  end
+
+  def <(other_move)
+    other_move.class == Rock || other_move.class == Scissors
+  end
+end
+
+class Move
+  VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+
+  attr_accessor :type
+
+  def initialize(value)
+    @value = value
+    @type = set_type
+  end
+
+  def set_type
+    case @value
+    when 'rock' then Rock.new
+    when 'paper' then Paper.new
+    when 'scissors' then Scissors.new
+    when 'lizard' then Lizard.new
+    when 'spock' then Spock.new
+    end
   end
 
   def to_s
@@ -94,6 +131,7 @@ class Human < Player
       puts "Please choose rock, paper, scissors, spock or lizard:"
       choice = gets.chomp
       break if Move::VALUES.include?(choice)
+      spacer
       puts "Sorry, invalid choice."
     end
 
@@ -125,13 +163,14 @@ class RPSGame
 
   def display_welcome_message
     spacer
-    puts "***** Welcome to Rock, Paper, Scissors! *****"
+    puts "***** Welcome to Rock, Paper, Scissors, Spock, Lizard! *****"
     puts "The first player to score #{WINNING_SCORE} points wins"
   end
 
   def display_goodbye_message
     spacer
-    puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+    puts "Thanks for playing Rock, Paper, Scissors, Spock, Lizard. Good bye!"
+    spacer
   end
 
   def display_moves
@@ -141,22 +180,24 @@ class RPSGame
   end
 
   def display_winner
-    if human.move > computer.move
+    if human.move.type > computer.move.type
       puts "#{human.name} won!"
-    elsif human.move < computer.move
+    elsif human.move.type < computer.move.type
       puts "#{computer.name} won!"
     else
       puts "It's a tie!"
     end
   end
 
-  def display_score
-    if human.move > computer.move
+  def update_score
+    if human.move.type > computer.move.type
       human.score += 1
-    elsif human.move < computer.move
+    elsif human.move.type < computer.move.type
       computer.score += 1
     end
+  end
 
+  def display_score
     spacer
     puts "-----------------SCORE-----------------"
     puts "#{human.name}'s score: #{human.score}"
@@ -201,10 +242,11 @@ class RPSGame
 
   def play_game
     loop do
-      human.choose
       computer.choose
+      human.choose
       display_moves
       display_winner
+      update_score
       display_score
 
       if winner?
