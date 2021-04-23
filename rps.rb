@@ -5,10 +5,6 @@ module Formatable
 end
 
 class Rock
-  def initialize
-    @value = "rock"
-  end
-
   def >(other_move)
     other_move.class == Scissors || other_move.class == Lizard
   end
@@ -19,10 +15,6 @@ class Rock
 end
 
 class Paper
-  def initialize
-    @value = "paper"
-  end
-
   def >(other_move)
     other_move.class == Rock || other_move.class == Spock
   end
@@ -33,10 +25,6 @@ class Paper
 end
 
 class Scissors
-  def initialize
-    @value = "scissors"
-  end
-
   def >(other_move)
     other_move.class == Paper || other_move.class == Lizard
   end
@@ -47,10 +35,6 @@ class Scissors
 end
 
 class Spock
-  def initialize
-    @value = "spock"
-  end
-
   def >(other_move)
     other_move.class == Rock || other_move.class == Scissors
   end
@@ -61,10 +45,6 @@ class Spock
 end
 
 class Lizard
-  def initialize
-    @value = "lizard"
-  end
-
   def >(other_move)
     other_move.class == Paper || other_move.class == Spock
   end
