@@ -104,20 +104,24 @@ class Human < Player
   end
 
   def choose
-    choice = nil
-
-    loop do
-      spacer
-      puts "Please choose rock, paper, scissors, spock or lizard:"
-      choice = gets.chomp
-      break if Move::VALUES.include?(choice)
-      spacer
-      puts "Sorry, invalid choice."
-    end
-
+    choice = select_move
     system "clear"
     self.move = Move.new(choice)
   end
+end
+
+def select_move
+  choice = nil
+  loop do
+    spacer
+    puts "Please choose rock, paper, scissors, spock or lizard:"
+    choice = gets.chomp
+    break if Move::VALUES.include?(choice)
+    spacer
+    puts "Sorry, invalid choice."
+  end
+
+  choice
 end
 
 class Computer < Player
@@ -130,9 +134,87 @@ class Computer < Player
   end
 end
 
+class History
+  include Formatable
+
+  attr_reader :data
+
+  def initialize
+    @data = {}
+  end
+
+  def update(human, computer, winner, round)
+    winner ||= "tie"
+
+    data[round] = {
+      "results" => results(human, computer, winner),
+      "score" => score(human, computer)
+    }
+  end
+
+  def results(human, computer, winner)
+    {
+      human.name => human.move.to_s,
+      computer.name => computer.move.to_s,
+      "Winner" => winner
+    }
+  end
+
+  def score(human, computer)
+    {
+      human.name => human.score,
+      computer.name => computer.score
+    }
+  end
+
+  def display
+    data.each do |round, data|
+      print_round(round)
+      spacer
+      print_results(data)
+      spacer
+      print_scores(data)
+    end
+  end
+
+  def print_round(round)
+    puts "------------------------------"
+    puts "ROUND #{round}:"
+  end
+
+  def print_results(data)
+    puts "** Results **"
+    data["results"].each do |name, move|
+      puts "#{name}: #{move}"
+    end
+  end
+
+  def print_scores(data)
+    puts "** Score **"
+    data["score"].each do |name, score|
+      puts "#{name}: #{score}"
+    end
+  end
+
+  def view?
+    answer = ''
+
+    loop do
+      spacer
+      puts "-------------VIEW HISTORY?-------------"
+      puts "Would you like to view the game history (y/n)"
+      answer = gets.chomp
+      break if ['y', 'n'].include?(answer.downcase)
+      puts "Sorry, must be y or n."
+    end
+
+    answer == 'y'
+  end
+end
+
 class RPSGame
   include Formatable
-  WINNING_SCORE = 3
+  WINNING_SCORE = 10
 
   attr_accessor :human, :computer, :round, :winner
   attr_reader :history
@@ -142,7 +224,7 @@ class RPSGame
     @human = Human.new
     @computer = Computer.new
     @winner = nil
-    @history = {}
+    @history = History.new
   end
 
   def display_welcome_message
@@ -207,40 +289,6 @@ class RPSGame
     self.round += 1
   end
 
-  def update_history
-    round_winner = winner || "tie"
-
-    history[round] = {
-      "results" => {
-        human.name => human.move.to_s,
-        computer.name => computer.move.to_s,
-        "Winner" => round_winner
-      },
-      "score" => {
-        human.name => human.score,
-        computer.name => computer.score
-      }
-    }
-  end
-
-  def display_history
-    history.each do |round, data|
-      puts "------------------------------"
-      puts "ROUND #{round}:"
-      puts
-      puts "** Results **"
-      data["results"].each do |name, move|
-        puts "#{name}: #{move}"
-      end
-
-      puts
-      puts "** Score **"
-      data["score"].each do |name, score|
-        puts "#{name}: #{score}"
-      end
-    end
-  end
-
   def game_over_message
     if human.score == WINNING_SCORE
       game_winner = human.name
@@ -250,22 +298,8 @@ class RPSGame
 
     spacer
     puts "----------------WINNER-----------------"
-    puts "#{game_winner} is the first to #{WINNING_SCORE} points and wins the game!"
-  end
-
-  def view_history?
-    answer = ''
-
-    loop do
-      spacer
-      puts "-------------VIEW HISTORY?-------------"
-      puts "Would you like to view the game history (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include?(answer.downcase)
-      puts "Sorry, must be y or n."
-    end
-
-    answer == 'y'
+    puts "#{game_winner} is the first to #{WINNING_SCORE} points and wins" \
+         " the game!"
   end
 
   def play_again?
@@ -292,7 +326,7 @@ class RPSGame
       display_winner
       update_score
       display_score
-      update_history
+      history.update(human, computer, winner, round)
       update_round
 
       if game_winner?
@@ -307,7 +341,7 @@ class RPSGame
 
     loop do
       play_game
-      display_history if view_history?
+      history.display if history.view?
       break unless play_again?
       reset_scores
     end
