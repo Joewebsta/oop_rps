@@ -84,12 +84,16 @@ class Player
 
   def initialize
     @score = 0
-    set_name
   end
 end
 
 class Human < Player
   include Formatable
+
+  def initialize
+    super
+    set_name
+  end
 
   def set_name
     n = ""
@@ -125,12 +129,26 @@ def select_move
 end
 
 class Computer < Player
-  def set_name
-    self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
+  attr_accessor :personality
+
+  def initialize
+    super
+    set_personality
+  end
+
+  def set_personality
+    self.personality = [R2D2.new].sample
+    # ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5']
+  end
+end
+
+class R2D2 < Computer
+  def initialize
+    @name = "R2D2"
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = Move.new("rock")
   end
 end
 
@@ -155,7 +173,7 @@ class History
   def results(human, computer, winner)
     {
       human.name => human.move.to_s,
-      computer.name => computer.move.to_s,
+      computer.personality.name => computer.personality.move.to_s,
       "Winner" => winner
     }
   end
@@ -163,7 +181,7 @@ class History
   def score(human, computer)
     {
       human.name => human.score,
-      computer.name => computer.score
+      computer.personality.name => computer.score
     }
   end
 
@@ -214,7 +232,7 @@ end
 
 class RPSGame
   include Formatable
-  WINNING_SCORE = 10
+  WINNING_SCORE = 3
 
   attr_accessor :human, :computer, :round, :winner
   attr_reader :history
@@ -242,14 +260,14 @@ class RPSGame
   def display_moves
     puts "----------------RESULTS----------------"
     puts "#{human.name} chose #{human.move}."
-    puts "#{computer.name} chose #{computer.move}."
+    puts "#{computer.personality.name} chose #{computer.personality.move}."
   end
 
   def determine_winner
-    self.winner = if human.move.type > computer.move.type
+    self.winner = if human.move.type > computer.personality.move.type
                     human.name
-                  elsif human.move.type < computer.move.type
-                    computer.name
+                  elsif human.move.type < computer.personality.move.type
+                    computer.personality.name
                   end
   end
 
@@ -264,7 +282,7 @@ class RPSGame
   def update_score
     if winner == human.name
       human.score += 1
-    elsif winner == computer.name
+    elsif winner == computer.personality.name
       computer.score += 1
     end
   end
@@ -273,7 +291,7 @@ class RPSGame
     spacer
     puts "-----------------SCORE-----------------"
     puts "#{human.name}'s score: #{human.score}"
-    puts "#{computer.name}'s score: #{computer.score}"
+    puts "#{computer.personality.name}'s score: #{computer.score}"
   end
 
   def game_winner?
@@ -293,7 +311,7 @@ class RPSGame
     if human.score == WINNING_SCORE
       game_winner = human.name
     elsif computer.score == WINNING_SCORE
-      game_winner = computer.name
+      game_winner = computer.personality.name
     end
 
     spacer
@@ -319,7 +337,7 @@ class RPSGame
 
   def play_game
     loop do
-      computer.choose
+      computer.personality.choose
       human.choose
       display_moves
       determine_winner
