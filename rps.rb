@@ -119,7 +119,7 @@ def select_move
   loop do
     spacer
     puts "Please choose rock, paper, scissors, spock or lizard:"
-    choice = gets.chomp
+    choice = gets.chomp.downcase
     break if Move::VALUES.include?(choice)
     spacer
     puts "Sorry, invalid choice."
@@ -137,8 +137,7 @@ class Computer < Player
   end
 
   def set_personality
-    self.personality = [R2D2.new].sample
-    # ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5']
+    self.personality = [R2D2, Hal, Chappie, Sonny, Number5].sample.new
   end
 end
 
@@ -149,6 +148,54 @@ class R2D2 < Computer
 
   def choose
     self.move = Move.new("rock")
+  end
+end
+
+class Hal < Computer
+  def initialize
+    @name = "Hal"
+  end
+
+  def choose
+    choice = rand(1..10) < 9 ? 'scissors' : "rock"
+    self.move = Move.new(choice)
+  end
+end
+
+class Chappie < Computer
+  def initialize
+    @name = "Chappie"
+  end
+
+  def choose
+    choice = case rand(1..20)
+             when (1..10) then "lizard"
+             when (11..15) then "spock"
+             when (16..18) then "rock"
+             else "paper"
+             end
+
+    self.move = Move.new(choice)
+  end
+end
+
+class Sonny < Computer
+  def initialize
+    @name = "Sonny"
+  end
+
+  def choose
+    self.move = Move.new(["rock", "spock"].sample)
+  end
+end
+
+class Number5 < Computer
+  def initialize
+    @name = "Number 5"
+  end
+
+  def choose
+    self.move = Move.new('lizard')
   end
 end
 
@@ -232,7 +279,7 @@ end
 
 class RPSGame
   include Formatable
-  WINNING_SCORE = 3
+  WINNING_SCORE = 10
 
   attr_accessor :human, :computer, :round, :winner
   attr_reader :history
@@ -248,7 +295,7 @@ class RPSGame
   def display_welcome_message
     spacer
     puts "***** Welcome to Rock, Paper, Scissors, Spock, Lizard! *****"
-    puts "The first player to score #{WINNING_SCORE} points wins"
+    puts "The first player to score #{RPSGame::WINNING_SCORE} points wins"
   end
 
   def display_goodbye_message
