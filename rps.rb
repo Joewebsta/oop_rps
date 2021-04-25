@@ -287,6 +287,10 @@ class History
 
     answer == 'y'
   end
+
+  def reset
+    @data = {}
+  end
 end
 
 class RPSGame
@@ -310,8 +314,10 @@ class RPSGame
     loop do
       play_game
       history.display if history.view?
+      history.reset
       break unless play_again?
       reset_scores
+      reset_round
     end
 
     display_goodbye_message
@@ -428,6 +434,10 @@ class RPSGame
   def reset_scores
     human.score = 0
     computer.score = 0
+  end
+
+  def reset_round
+    self.round = 1
   end
 end
 
