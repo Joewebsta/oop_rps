@@ -33,9 +33,21 @@ class Human < Player
   end
 
   def choose
-    choice = select_move
+    choice = convert_abbrev(select_move)
     system "clear"
     self.move = Move.new(choice)
+  end
+end
+
+def convert_abbrev(move)
+  return move if move.size > 2
+
+  case move
+  when 'r' then 'rock'
+  when 'p' then 'paper'
+  when 'sc' then 'scissors'
+  when 'l' then 'lizard'
+  when 'sp' then 'spock'
   end
 end
 
@@ -43,7 +55,7 @@ def select_move
   choice = nil
   loop do
     spacer
-    puts "Please choose rock, paper, scissors, spock or lizard:"
+    puts "Please choose rock(r), paper(p), scissors(sc), spock(sp) or lizard(l):"
     choice = gets.chomp.downcase
     break if Move::VALUES.include?(choice)
     spacer
@@ -125,7 +137,7 @@ class Number5 < Computer
 end
 
 class Move
-  VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+  VALUES = ['rock', 'r', 'paper', 'p', 'scissors', 'sc', 'lizard', 'l', 'spock', 'sp']
 
   attr_accessor :type
 
@@ -313,15 +325,15 @@ class RPSGame
 
   def play_game
     loop do
-      computer.personality.choose
-      human.choose
-      display_moves
-      determine_winner
-      display_winner
-      update_score
-      display_score
-      history.update(human, computer, winner, round)
-      update_round
+      computer.personality.choose # player_choose
+      human.choose # player_choose
+      display_moves # end_of_round_results
+      determine_winner # end_of_round_results
+      display_winner # end_of_round_results
+      update_score # end_of_round_updates
+      display_score # end_of_round_updates
+      history.update(human, computer, winner, round) # end_of_round_updates
+      update_round # end_of_round_updates
 
       if game_winner?
         game_over_message
@@ -332,14 +344,18 @@ class RPSGame
 
   def display_moves
     puts "----------------RESULTS----------------"
+    puts "** Round #{round} **"
     puts "#{human.name} chose #{human.move}."
     puts "#{computer.personality.name} chose #{computer.personality.move}."
   end
 
   def determine_winner
-    self.winner = if human.move.type > computer.personality.move.type
+    human_move = human.move.type
+    computer_move = computer.personality.move.type
+
+    self.winner = if human_move > computer_move
                     human.name
-                  elsif human.move.type < computer.personality.move.type
+                  elsif human_move < computer_move
                     computer.personality.name
                   end
   end
