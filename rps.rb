@@ -10,6 +10,16 @@ class Player
   def initialize
     @score = 0
   end
+
+  def create_move(choice)
+    case choice
+    when 'rock' then Rock.new("rock")
+    when 'paper' then Paper.new("paper")
+    when 'scissors' then Scissors.new("scissors")
+    when 'lizard' then Lizard.new("lizard")
+    when 'spock' then Spock.new("spock")
+    end
+  end
 end
 
 class Human < Player
@@ -35,34 +45,40 @@ class Human < Player
   def choose
     choice = convert_abbrev(select_move)
     system "clear"
-    self.move = Move.new(choice)
+    self.move = create_move(choice)
+  end
+
+  def convert_abbrev(move)
+    return move if move.size > 2
+
+    case move
+    when 'r' then 'rock'
+    when 'p' then 'paper'
+    when 'sc' then 'scissors'
+    when 'l' then 'lizard'
+    when 'sp' then 'spock'
+    end
+  end
+
+  def select_move
+    choice = nil
+
+    loop do
+      spacer
+      move_prompt
+      choice = gets.chomp.downcase
+      break if Move::VALUES.include?(choice)
+      spacer
+      puts "Sorry, invalid choice."
+    end
+
+    choice
   end
 end
 
-def convert_abbrev(move)
-  return move if move.size > 2
-
-  case move
-  when 'r' then 'rock'
-  when 'p' then 'paper'
-  when 'sc' then 'scissors'
-  when 'l' then 'lizard'
-  when 'sp' then 'spock'
-  end
-end
-
-def select_move
-  choice = nil
-  loop do
-    spacer
-    puts "Please choose rock(r), paper(p), scissors(sc), spock(sp) or lizard(l):"
-    choice = gets.chomp.downcase
-    break if Move::VALUES.include?(choice)
-    spacer
-    puts "Sorry, invalid choice."
-  end
-
-  choice
+def move_prompt
+  puts "Please choose rock(r), paper(p), scissors(sc), spock(sp) or " \
+           "lizard(l):"
 end
 
 class Computer < Player
@@ -84,7 +100,7 @@ class R2D2 < Computer
   end
 
   def choose
-    self.move = Move.new("rock")
+    self.move = create_move("rock")
   end
 end
 
@@ -95,7 +111,7 @@ class Hal < Computer
 
   def choose
     choice = rand(1..10) < 9 ? 'scissors' : "rock"
-    self.move = Move.new(choice)
+    self.move = create_move(choice)
   end
 end
 
@@ -112,7 +128,7 @@ class Chappie < Computer
              else "paper"
              end
 
-    self.move = Move.new(choice)
+    self.move = create_move(choice)
   end
 end
 
@@ -122,7 +138,7 @@ class Sonny < Computer
   end
 
   def choose
-    self.move = Move.new(["rock", "spock"].sample)
+    self.move = create_move(["rock", "spock"].sample)
   end
 end
 
@@ -132,40 +148,24 @@ class Number5 < Computer
   end
 
   def choose
-    self.move = Move.new('lizard')
+    self.move = create_move('lizard')
   end
 end
 
 class Move
-  VALUES = ['rock', 'r',
-            'paper', 'p',
-            'scissors', 'sc',
-            'lizard', 'l',
+  VALUES = ['rock', 'r', 'paper', 'p', 'scissors', 'sc', 'lizard', 'l',
             'spock', 'sp']
 
-  attr_accessor :type
-
-  def initialize(value)
-    @value = value
-    @type = set_type
-  end
-
-  def set_type
-    case @value
-    when 'rock' then Rock.new
-    when 'paper' then Paper.new
-    when 'scissors' then Scissors.new
-    when 'lizard' then Lizard.new
-    when 'spock' then Spock.new
-    end
+  def initialize(name)
+    @name = name
   end
 
   def to_s
-    @value
+    @name
   end
 end
 
-class Rock
+class Rock < Move
   def >(other_move)
     other_move.class == Scissors || other_move.class == Lizard
   end
@@ -175,7 +175,7 @@ class Rock
   end
 end
 
-class Paper
+class Paper < Move
   def >(other_move)
     other_move.class == Rock || other_move.class == Spock
   end
@@ -185,7 +185,7 @@ class Paper
   end
 end
 
-class Scissors
+class Scissors < Move
   def >(other_move)
     other_move.class == Paper || other_move.class == Lizard
   end
@@ -195,7 +195,7 @@ class Scissors
   end
 end
 
-class Spock
+class Spock < Move
   def >(other_move)
     other_move.class == Rock || other_move.class == Scissors
   end
@@ -205,7 +205,7 @@ class Spock
   end
 end
 
-class Lizard
+class Lizard < Move
   def >(other_move)
     other_move.class == Paper || other_move.class == Spock
   end
@@ -368,8 +368,8 @@ class RPSGame
   end
 
   def determine_winner
-    human_move = human.move.type
-    computer_move = computer.personality.move.type
+    human_move = human.move
+    computer_move = computer.personality.move
 
     self.winner = if human_move > computer_move
                     human.name
