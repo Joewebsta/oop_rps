@@ -279,9 +279,9 @@ class History
     loop do
       spacer
       puts "-------------VIEW HISTORY?-------------"
-      puts "Would you like to view the game history (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include?(answer.downcase)
+      puts "Would you like to view the game history? (y/n)"
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include?(answer)
       puts "Sorry, must be y or n."
     end
 
@@ -423,8 +423,8 @@ class RPSGame
       spacer
       puts "--------------PLAY AGAIN?--------------"
       puts "Would you like to play again? (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include?(answer.downcase)
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include?(answer)
       puts "Sorry, must be y or n."
     end
 
