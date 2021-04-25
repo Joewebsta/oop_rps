@@ -137,7 +137,11 @@ class Number5 < Computer
 end
 
 class Move
-  VALUES = ['rock', 'r', 'paper', 'p', 'scissors', 'sc', 'lizard', 'l', 'spock', 'sp']
+  VALUES = ['rock', 'r',
+            'paper', 'p',
+            'scissors', 'sc',
+            'lizard', 'l',
+            'spock', 'sp']
 
   attr_accessor :type
 
@@ -331,21 +335,29 @@ class RPSGame
 
   def play_game
     loop do
-      computer.personality.choose # player_choose
-      human.choose # player_choose
-      display_moves # end_of_round_results
-      determine_winner # end_of_round_results
-      display_winner # end_of_round_results
-      update_score # end_of_round_updates
-      display_score # end_of_round_updates
-      history.update(human, computer, winner, round) # end_of_round_updates
-      update_round # end_of_round_updates
+      play_round
+      end_of_round_updates
 
       if game_winner?
         game_over_message
         break
       end
     end
+  end
+
+  def play_round
+    computer.personality.choose
+    human.choose
+    display_moves
+    determine_winner
+    display_winner
+  end
+
+  def end_of_round_updates
+    update_score
+    display_score
+    history.update(human, computer, winner, round)
+    update_round
   end
 
   def display_moves
