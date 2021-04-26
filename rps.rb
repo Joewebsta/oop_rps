@@ -13,11 +13,11 @@ class Player
 
   def create_move(choice)
     case choice
-    when 'rock' then Rock.new("rock")
-    when 'paper' then Paper.new("paper")
-    when 'scissors' then Scissors.new("scissors")
-    when 'lizard' then Lizard.new("lizard")
-    when 'spock' then Spock.new("spock")
+    when 'rock' then Rock.new
+    when 'paper' then Paper.new
+    when 'scissors' then Scissors.new
+    when 'lizard' then Lizard.new
+    when 'spock' then Spock.new
     end
   end
 end
@@ -156,8 +156,10 @@ class Move
   VALUES = ['rock', 'r', 'paper', 'p', 'scissors', 'sc', 'lizard', 'l',
             'spock', 'sp']
 
-  def initialize(name)
-    @name = name
+  attr_reader :name, :winning_moves
+
+  def >(other_move)
+    winning_moves.includes?(other_move.class)
   end
 
   def to_s
@@ -166,52 +168,57 @@ class Move
 end
 
 class Rock < Move
-  def >(other_move)
-    other_move.class == Scissors || other_move.class == Lizard
+  def initialize
+    @name = "rock"
+    @winning_moves = [Scissors, Lizard]
   end
 
-  def <(other_move)
-    other_move.class == Spock || other_move.class == Paper
+  def >(other_move)
+    winning_moves.include?(other_move.class)
   end
 end
 
 class Paper < Move
-  def >(other_move)
-    other_move.class == Rock || other_move.class == Spock
+  def initialize
+    @name = "paper"
+    @winning_moves = [Rock, Spock]
   end
 
-  def <(other_move)
-    other_move.class == Scissors || other_move.class == Lizard
+  def >(other_move)
+    winning_moves.include?(other_move.class)
   end
 end
 
 class Scissors < Move
-  def >(other_move)
-    other_move.class == Paper || other_move.class == Lizard
+  def initialize
+    @name = "scissors"
+    @winning_moves = [Paper, Lizard]
   end
 
-  def <(other_move)
-    other_move.class == Rock || other_move.class == Spock
+  def >(other_move)
+    winning_moves.include?(other_move.class)
   end
 end
 
 class Spock < Move
-  def >(other_move)
-    other_move.class == Rock || other_move.class == Scissors
+  def initialize
+    @name = "spock"
+    @winning_moves = [Rock, Scissors]
   end
 
-  def <(other_move)
-    other_move.class == Lizard || other_move.class == Paper
+  def >(other_move)
+    winning_moves.include?(other_move.class)
   end
 end
 
 class Lizard < Move
-  def >(other_move)
-    other_move.class == Paper || other_move.class == Spock
+  def initialize
+    @name = "lizard"
+    @winning_moves = [Paper, Spock]
   end
 
-  def <(other_move)
-    other_move.class == Rock || other_move.class == Scissors
+  def >(other_move)
+    winning_moves.include?(other_move.class)
   end
 end
 
@@ -373,7 +380,9 @@ class RPSGame
 
     self.winner = if human_move > computer_move
                     human.name
-                  elsif human_move < computer_move
+                  elsif human_move.class == computer_move.class
+                    nil
+                  else
                     computer.personality.name
                   end
   end
