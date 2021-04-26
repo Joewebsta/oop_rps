@@ -5,7 +5,9 @@ module Formatable
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :score, :name, :move
+
+  private
 
   def initialize
     @score = 0
@@ -30,6 +32,14 @@ class Human < Player
     set_name
   end
 
+  def choose
+    choice = convert_abbrev(select_move)
+    system "clear"
+    self.move = create_move(choice)
+  end
+
+  private
+
   def set_name
     n = ""
     loop do
@@ -40,12 +50,6 @@ class Human < Player
       puts "Sorry, must enter a value."
     end
     self.name = n
-  end
-
-  def choose
-    choice = convert_abbrev(select_move)
-    system "clear"
-    self.move = create_move(choice)
   end
 
   def convert_abbrev(move)
@@ -82,12 +86,16 @@ def move_prompt
 end
 
 class Computer < Player
-  attr_accessor :personality
+  attr_reader :personality
 
   def initialize
     super
     set_personality
   end
+
+  private
+
+  attr_writer :personality
 
   def set_personality
     self.personality = [R2D2, Hal, Chappie, Sonny, Number5].sample.new
@@ -156,25 +164,23 @@ class Move
   VALUES = ['rock', 'r', 'paper', 'p', 'scissors', 'sc', 'lizard', 'l',
             'spock', 'sp']
 
-  attr_reader :name, :winning_moves
-
   def >(other_move)
-    winning_moves.includes?(other_move.class)
+    winning_moves.include?(other_move.class)
   end
 
   def to_s
     @name
   end
+
+  private
+
+  attr_reader :winning_moves
 end
 
 class Rock < Move
   def initialize
     @name = "rock"
     @winning_moves = [Scissors, Lizard]
-  end
-
-  def >(other_move)
-    winning_moves.include?(other_move.class)
   end
 end
 
@@ -183,20 +189,12 @@ class Paper < Move
     @name = "paper"
     @winning_moves = [Rock, Spock]
   end
-
-  def >(other_move)
-    winning_moves.include?(other_move.class)
-  end
 end
 
 class Scissors < Move
   def initialize
     @name = "scissors"
     @winning_moves = [Paper, Lizard]
-  end
-
-  def >(other_move)
-    winning_moves.include?(other_move.class)
   end
 end
 
@@ -205,10 +203,6 @@ class Spock < Move
     @name = "spock"
     @winning_moves = [Rock, Scissors]
   end
-
-  def >(other_move)
-    winning_moves.include?(other_move.class)
-  end
 end
 
 class Lizard < Move
@@ -216,44 +210,10 @@ class Lizard < Move
     @name = "lizard"
     @winning_moves = [Paper, Spock]
   end
-
-  def >(other_move)
-    winning_moves.include?(other_move.class)
-  end
 end
 
 class History
   include Formatable
-
-  attr_reader :data
-
-  def initialize
-    @data = {}
-  end
-
-  def update(human, computer, winner, round)
-    winner ||= "tie"
-
-    data[round] = {
-      "results" => results(human, computer, winner),
-      "score" => score(human, computer)
-    }
-  end
-
-  def results(human, computer, winner)
-    {
-      human.name => human.move.to_s,
-      computer.personality.name => computer.personality.move.to_s,
-      "Winner" => winner
-    }
-  end
-
-  def score(human, computer)
-    {
-      human.name => human.score,
-      computer.personality.name => computer.score
-    }
-  end
 
   def display
     data.each do |round, data|
@@ -262,25 +222,6 @@ class History
       print_results(data)
       spacer
       print_scores(data)
-    end
-  end
-
-  def print_round(round)
-    puts "------------------------------"
-    puts "ROUND #{round}:"
-  end
-
-  def print_results(data)
-    puts "** Results **"
-    data["results"].each do |name, move|
-      puts "#{name}: #{move}"
-    end
-  end
-
-  def print_scores(data)
-    puts "** Score **"
-    data["score"].each do |name, score|
-      puts "#{name}: #{score}"
     end
   end
 
@@ -302,22 +243,63 @@ class History
   def reset
     @data = {}
   end
+
+  def update(human, computer, winner, round)
+    winner ||= "tie"
+
+    data[round] = {
+      "results" => results(human, computer, winner),
+      "score" => score(human, computer)
+    }
+  end
+
+  private
+
+  attr_reader :data
+
+  def initialize
+    @data = {}
+  end
+
+  def results(human, computer, winner)
+    {
+      human.name => human.move.to_s,
+      computer.personality.name => computer.personality.move.to_s,
+      "Winner" => winner
+    }
+  end
+
+  def score(human, computer)
+    {
+      human.name => human.score,
+      computer.personality.name => computer.score
+    }
+  end
+
+  def print_round(round)
+    puts "------------------------------"
+    puts "ROUND #{round}:"
+  end
+
+  def print_results(data)
+    puts "** Results **"
+    data["results"].each do |name, move|
+      puts "#{name}: #{move}"
+    end
+  end
+
+  def print_scores(data)
+    puts "** Score **"
+    data["score"].each do |name, score|
+      puts "#{name}: #{score}"
+    end
+  end
 end
 
 class RPSGame
   include Formatable
+
   WINNING_SCORE = 10
-
-  attr_accessor :human, :computer, :round, :winner
-  attr_reader :history
-
-  def initialize
-    @round = 1
-    @human = Human.new
-    @computer = Computer.new
-    @winner = nil
-    @history = History.new
-  end
 
   def play
     display_welcome_message
@@ -332,6 +314,19 @@ class RPSGame
     end
 
     display_goodbye_message
+  end
+
+  private
+
+  attr_accessor :human, :computer, :round, :winner
+  attr_reader :history
+
+  def initialize
+    @round = 1
+    @human = Human.new
+    @computer = Computer.new
+    @winner = nil
+    @history = History.new
   end
 
   def display_welcome_message
@@ -417,7 +412,7 @@ class RPSGame
   end
 
   def update_round
-    self.round += 1
+    @round += 1
   end
 
   def game_winner?
